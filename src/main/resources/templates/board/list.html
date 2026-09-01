@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="ko"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Bootstrap CSS -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+	crossorigin="anonymous">
+
+<title>board List</title>
+</head>
+<body>
+
+	<div class="container-fluid">
+		<div class="row">
+			<!-- Header -->
+			<div class="row">
+				<div class="col">
+					<nav class="navbar navbar-expand-lg navbar-light bg-light">
+						<div class="container-fluid">
+							<a class="navbar-brand" href="#">Navbar</a>
+							<button class="navbar-toggler" type="button"
+								data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+								aria-controls="navbarNavAltMarkup" aria-expanded="false"
+								aria-label="Toggle navigation">
+								<span class="navbar-toggler-icon"></span>
+							</button>
+							<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+								<div class="navbar-nav">
+									<a class="nav-link active" aria-current="page" href="#">Home</a>
+									<a class="nav-link" href="#">Features</a> <a class="nav-link"
+										href="#">Pricing</a> <a class="nav-link disabled">Disabled</a>
+								</div>
+
+								<!-- 관리자에게만 회원 관리 버튼 표시 -->
+								<a sec:authorize="hasAuthority('ROLE_ADMIN')"
+									th:href="@{/member/list}"
+									class="btn btn-outline-primary ms-2">
+									회원 관리
+								</a>
+
+								<!-- 로그인 회원에게만 내 정보 수정 버튼 표시 -->
+								<a sec:authorize="isAuthenticated()"
+									th:href="@{/member/modify}"
+									class="btn btn-outline-secondary ms-2">
+									내 정보 수정
+								</a>
+								<a sec:authorize="isAuthenticated()"
+									th:href="@{/logout}"
+									class="btn btn-outline-secondary ms-2">
+									로그아웃
+								</a>
+
+								<!-- 로그인 회원에게만 탈퇴 버튼 표시 -->
+								<form sec:authorize="isAuthenticated()"
+									th:action="@{/member/remove}"
+									method="post"
+									class="d-inline ms-2"
+									onsubmit="return confirm('정말 회원 탈퇴하시겠습니까?');">
+									<button type="submit" class="btn btn-outline-danger">
+										회원 탈퇴
+									</button>
+								</form>
+							</div>
+						</div>
+					</nav>
+				</div>
+			</div>
+
+			<!-- Search Form Card -->
+			<div class="row content">
+				<div class="col">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">검색</h5>
+							<!-- Search Form -->
+							<form name="sForm" id="sForm" th:action="@{/board/list}"
+								method="post">
+								<input type="hidden" name="size"
+									th:value="${pageRequestDTO.size}">
+
+								<!-- 검색 타입 (체크박스) -->
+								<div class="mb-3">
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="checkbox" name="types"
+											value="t" id="typeT"
+											th:checked="${pageRequestDTO.isCheckType('t')}"> <label
+											class="form-check-label" for="typeT">제목</label>
+									</div>
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="checkbox" name="types"
+											value="c" id="typeC"
+											th:checked="${pageRequestDTO.isCheckType('c')}"> <label
+											class="form-check-label" for="typeC">내용</label>
+									</div>
+									<div class="form-check form-check-inline">
+										<input class="form-check-input" type="checkbox" name="types"
+											value="w" id="typeW"
+											th:checked="${pageRequestDTO.isCheckType('w')}"> <label
+											class="form-check-label" for="typeW">작성자</label>
+									</div>
+								</div>
+
+								<!--/* 키워드 검색창 */-->
+								<div class="input-group mb-3">
+									<input type="text" name="keyword" class="form-control"
+										th:value="${pageRequestDTO.keyword}" placeholder="검색어를 입력하세요">
+									<button class="btn btn-primary" type="submit">Search</button>
+									<button class="btn btn-info clearBtn" type="button">Clear</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Content List Table Card -->
+			<div class="row content">
+				<div class="col">
+					<div class="card">
+						<div class="card-header">결과</div>
+						<div class="card-body">
+							<h5 class="card-title">조회 범위</h5>
+
+							<!-- Size Select Box -->
+							<select class="form-select form-select-sm"
+								aria-label="Small select" name="size" id="size">
+								<option value="10" th:selected="${pageResponseDTO.size == 10}">10</option>
+								<option value="30" th:selected="${pageResponseDTO.size == 30}">30</option>
+								<option value="50" th:selected="${pageResponseDTO.size == 50}">50</option>
+								<option value="100" th:selected="${pageResponseDTO.size == 100}">100</option>
+							</select>
+
+							<!-- Button Controls -->
+							<div class="d-flex justify-content-between my-3">
+								<button type="button" class="btn btn-danger removeBatchBtn">선택
+									삭제</button>
+								<button type="button" class="btn btn-primary registerBtn">Register</button>
+							</div>
+
+							<!-- Data Table -->
+							<table class="table">
+								<thead>
+									<tr>
+										<th scope="col"><input type="checkbox" id="checkAll"></th>
+										<th scope="col">Bno</th>
+										<th scope="col">Title</th>
+										<th scope="col">Writer</th>
+										<th scope="col">RegDate</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="dto : ${pageResponseDTO.dtoList}">
+										<td><input type="checkbox" name="bnos" class="bnos"
+											th:value="${dto.bno}"></td>
+										<th scope="row" th:text="${dto.bno}">1</th>
+										<td>
+											<!-- 상세 조회 링크 --> <a
+											th:href="@{/board/read(bno=${dto.bno})} + '&' + ${pageRequestDTO.link}"
+											class="text-decoration-none bno-link"
+											th:data-bno="${dto.bno}" th:text="${dto.title}">Title</a> <span>([[${dto.replyCount}]])</span>
+
+											<!-- ★ 등록된 썸네일 이미지가 있다면 목록에 출력 -->
+											<div
+												th:if="${dto.boardImages != null && dto.boardImages.size() > 0}">
+												<img
+													style="width: 50px; height: 50px; object-fit: cover; margin-right: 5px;"
+													th:each="boardImage: ${dto.boardImages}"
+													th:src="|/view/s_${boardImage.uuid}_${boardImage.filename}|">
+											</div>
+										</td>
+										<td th:text="${dto.writer}">Writer</td>
+										<td
+											th:text="${#temporals.format(dto.regDate, 'yyyy-MM-dd HH:mm')}">2026-08-19
+											14:38</td>
+									</tr>
+								</tbody>
+							</table>
+							<!-- Pagination -->
+							<div class="float-end">
+								<ul class="pagination flex-wrap">
+									<!-- Previous -->
+									<li class="page-item" th:if="${pageResponseDTO.prev}"><a
+										class="page-link"
+										th:data-page-num="${pageResponseDTO.start - 1}" href="#">Previous</a>
+									</li>
+
+									<!-- Numbers -->
+									<th:block
+										th:each="page : ${#numbers.sequence(pageResponseDTO.start, pageResponseDTO.end)}">
+										<li class="page-item"
+											th:classappend="${pageResponseDTO.page == page} ? 'active' : ''">
+											<a class="page-link" th:data-page-num="${page}"
+											href="javascript:void(0)" th:text="${page}">1</a>
+										</li>
+									</th:block>
+
+									<!-- Next -->
+									<li class="page-item" th:if="${pageResponseDTO.next}"><a
+										class="page-link"
+										th:data-page-num="${pageResponseDTO.end + 1}" href="#">Next</a>
+									</li>
+								</ul>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Footer -->
+		<div class="row footer">
+			<div class="row fixed-bottom" style="z-index: -100">
+				<footer class="py-1 my-1">
+					<p class="text-center text-muted">Footer</p>
+				</footer>
+			</div>
+		</div>
+	</div>
+
+	<!-- JS Libraries -->
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+		crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+		crossorigin="anonymous"></script>
+
+	<script th:inline="javascript">
+	const result = [[${result}]];
+	if (result) {
+		alert(result);
+	}
+	
+	$(document).ready(function() {
+	    const $sForm = $("#sForm");
+	    const listUrl = [[@{/board/list}]] /*'/board/list'*/;
+
+	    // 등록 버튼 이동
+	    $(".registerBtn").on("click", function(e) {
+	        self.location = [[@{/board/register}]] /*'/board/register'*/;
+	    });
+
+	    // 전체 선택 / 해제
+	    $("#checkAll").on("change", function() {
+	        $(".bnos").prop("checked", this.checked);
+	    });
+
+	    // 선택 삭제 버튼 이벤트
+	    $(".removeBatchBtn").on("click", function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+
+//	        const $checkedBoxes = $("input[name='bnos']:checked");
+	        const $checkedBoxes = $(".bnos:checked");
+
+	        if (0 === $checkedBoxes.length) {
+	            alert("삭제할 항목을 하나 이상 선택해주세요.");
+	            return;
+	        }
+
+	        if (confirm("선택한 항목들을 정말 삭제하시겠습니까?")) {
+	            // 기존 sForm 내부의 동적 bnos hidden 태그 제거
+	            $sForm.find("input[name='bnos'][type='hidden']").remove();
+
+	            // 체크된 항목들을 hidden input으로 동적 생성 후 sForm에 추가
+	            $checkedBoxes.each(function() {
+	                $("<input>")
+	                    .attr("type", "hidden")
+	                    .attr("name", "bnos")
+	                    .val($(this).val())
+	                    .appendTo($sForm);
+	            });
+
+	            $sForm.attr("action", /*[[@{/board/removeBatch}]]*/ '/board/removeBatch')
+	                  .attr("method", "post")
+	                  .submit();
+	        }
+	    });
+
+	    // 페이지 번호 클릭 이벤트 (이벤트 위임)
+	    $(".pagination").on("click", ".page-link", function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+
+	        const pageNum = $(this).data("num") || $(this).data("pageNum");
+	        if (!pageNum) return;
+
+	        // 기존 page input 제거 후 새로운 page 값 추가하여 제출
+	        $sForm.find("input[name='page']").remove();
+	        $("<input>")
+	            .attr("type", "hidden")
+	            .attr("name", "page")
+	            .val(pageNum)
+	            .appendTo($sForm);
+
+	        $sForm.submit();
+	    });
+
+	    // 목록 개수(Size) 변경 이벤트
+	    $("#size").on("change", function() {
+	        const size = $(this).val();
+	        self.location = `${listUrl}?size=${size}`;
+	    });
+
+	    // 검색 초기화 버튼 이벤트
+	    $(".clearBtn").on("click", function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+
+	        const size = $("#size").val() || 10;
+	        self.location = `${listUrl}?size=${size}`;
+	    });
+	    
+	    
+/* 	    $(".bno-link").on("click", function(e) {
+	        e.preventDefault();
+	        e.stopPropagation();
+	        
+            $("<input>")
+            .attr("type", "text")
+            .attr("name", "bno")
+            .val(e.target.dataset.bno)
+            .appendTo($sForm);
+
+    		$sForm.attr("action", [[@{/board/read}]])
+          		  .attr("method", "post")
+          		  .submit();
+
+	    })
+ */	});
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+<!-- JSP였다면: <jsp:include page="/WEB-INF/views/common/header.jsp" /> -->
+<div>
+	<h3>Sample Layout Header</h3>
+</div>
+
+<div layout:fragment="content">
+	<p>Page content goes here</p>
+</div>
+
+<!-- JSP였다면: <jsp:include page="/WEB-INF/views/common/footer.jsp" /> -->
+<div>
+	<h3>Sample Layout Footer</h3>
+</div>
+
+<!-- 아래는 javascript 코드 영역 -->
+<th:block layout:fragment="script">
+</th:block>
+
+</body>
+</html>

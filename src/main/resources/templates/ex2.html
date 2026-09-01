@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<title>Insert title here</title>
+</head>
+<body>
+<div th:text="${list}"></div>
+<div th:text="${map}"></div>
+<div th:text="${dto}"></div>
+<script type="text/javascript" th:inline="javascript">
+const list = [[${list}]];//json 표기법으로 객체가 표시됨
+const map = [[${map}]];//json 표기법으로 객체가 표시됨
+const dto = [[${dto}]];//json 표기법으로 객체가 표시됨
+
+console.log(list);
+for (key in list) {
+	console.log(key + " : " + list[key])
+}
+console.log("======================")
+console.log(map);
+for (key in map) {
+	console.log(key + " : " + map[key])
+}
+console.log("======================")
+console.log(map.A);
+console.log(map.B);
+
+console.log("======================")
+console.log(dto);
+for (key in dto) {
+	console.log(key + " : " + dto[key])
+}
+console.log(dto.p1);
+console.log(dto.p2);
+console.log(dto.p3);
+
+</script>
+</body>
+</html>

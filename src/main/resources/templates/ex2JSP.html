@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<title>ex2 - JSP style</title>
+</head>
+<body>
+
+<h3>JSP(JSTL) 스타일로 흉내낸 예제</h3>
+
+<!-- 실제 JSP였다면 이렇게 썼을 것 (참고용 주석)-->
+<!--
+<c:forEach var="s" items="${list}">
+    ${s}<br>
+</c:forEach>
+-->
+
+<!-- 실제로는 Thymeleaf th:each로 동일한 동작을 구현 -->
+<div th:each="s : ${list}">
+    <span th:text="${s}"></span><br>
+</div>
+
+<hr>
+
+<div th:each="entry : ${map}">
+    <span th:text="${entry.key}"></span> :
+    <span th:text="${entry.value}"></span><br>
+</div>
+
+<hr>
+
+<div>
+    p1: <span th:text="${dto.p1}"></span><br>
+    p2: <span th:text="${dto.p2}"></span><br>
+    p3: <span th:text="${dto.p3}"></span>
+</div>
+
+</body>
+</html>

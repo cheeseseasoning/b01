@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<title>Insert title here</title>
+</head>
+<body>
+<!--/* 타임리프 주석 */-->
+<!-- html 주석  -->
+ 
+<h1 th:text="${list}"></h1>
+<ul>
+	<li>AAA</li>
+	<li>BBB</li>
+	<li>CCC</li>
+</ul>
+<hr/>
+<ul>
+	<li th:each="str:${list}" th:text="${str}"></li>
+</ul>
+<hr/>
+
+<ul>
+	<th:block th:each="str:${list}"> 
+		<li th:text="${str}"></li>
+	</th:block>
+</ul>
+<hr/>
+<ul>
+	<th:block th:each="str:${list}"> 
+		<li>[[${str}]]</li>
+	</th:block>
+</ul>
+
+<hr/>
+<ul>
+	<th:block th:each="str,status:${list}"> 
+		<li>[[${status.even}]] - [[${str}]]</li>
+	</th:block>
+</ul>
+<hr/>
+<ul>
+	<th:block th:each="str,status:${list}"> 
+		<li>
+			<span th:if="${status.odd}" >ODD -- [[${str}]]</span> 
+			<span th:unless="${status.odd}" >EVEN -- [[${str}]]</span> 
+		</li>
+	</th:block>
+</ul>
+<hr/>
+<ul>
+	<th:block th:each="str,status:${list}"> 
+		<li>
+			<span th:text="${status.odd} ? '홀수 ' + ${str} : '짝수 ' + ${str}" ></span> 
+		</li>
+	</th:block>
+</ul>
+<hr/>
+<ul>
+	<th:block th:each="str,status:${list}"> 
+		<li>
+			<th:block th:switch="${status.index % 3}">
+				<span th:case="0" >3으로 나눈 나머지 0 - [[${str}]]</span> 
+				<span th:case="1" >3으로 나눈 나머지 1 - [[${str}]]</span> 
+				<span th:case="2" >3으로 나눈 나머지 2 - [[${str}]]</span> 
+			</th:block>
+		</li>
+	</th:block>
+</ul>
+<hr/>
+<ul>
+	<th:block th:each="str,status:${list}"> 
+		<li>
+			<span >3으로 나눈 나머지 [[${status.index % 3}]] - [[${str}]]</span> 
+		</li>
+	</th:block>
+</ul>
+
+<h1>[[${list}]]</h1>
+
+<a th:href="@{/hello}">Go to /hello</a><br/>
+<a th:href="@{/hello(name='aaa', age=10)}">Go to /hello(name, age)</a><br/>
+<a th:href="@{/hello(name='한글전달', age=10)}">Go to /hello(한글전달, age)</a><br/>
+<a th:href="@{/hello(tids=${ {10,20,30,40} }, age=10)}">Go to /hello(배열, age)</a><br/>
+
+</body>
+</html>

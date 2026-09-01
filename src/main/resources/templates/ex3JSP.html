@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{layout/layout1}"
+>
+<div layout:fragment="content">
+	<h1>ex3JSP.html</h1>
+
+	<!-- 실제 JSP였다면 이렇게 썼을 것 (참고용)
+	<c:forEach var="a" items="${arr}">
+	    ${a}<br>
+	</c:forEach>
+	-->
+
+	<!-- Thymeleaf에서 동일한 동작 -->
+	<ul>
+		<li th:each="a : ${arr}" th:text="${a}"></li>
+	</ul>
+</div>
+<script layout:fragment="script" th:inline="javascript">
+	const arr = [[${arr}]];
+	console.log(arr);
+</script>
+</html>
