@@ -166,23 +166,23 @@
 		}
 
 		// 2. 썸네일 화면 출력을 담당하는 함수 (중복 꼬임 방지: insertAdjacentHTML 사용)
-		function showUploadFile({uuid, fileName, link}){
+		function showUploadFile({uuid, filename, link, realFilename, url}){
 			const uploadResult = document.querySelector(".uploadResult");
-			const realFileName = fileName || arguments[0].filename;
+//			const realFileName = fileName || arguments[0].filename;
 
 			const str = `<div class="card col-4">
 					<div class="card-header d-flex justify-content-center">
-						${realFileName}
-						<button class="btn-sm btn-danger ms-2" type="button" onclick="removeFile('${uuid}', '${realFileName}', this)">X</button>
+						${filename}
+						<button class="btn-sm btn-danger ms-2" type="button" onclick="removeFile('${uuid}', '${filename}', this)">X</button>
 					</div>
 					<div class="card-body d-flex justify-content-center">
-						 <img src="/view/${link}" data-src="${uuid+"_"+realFileName}" style="width:100px; height:100px; object-fit:cover;">
+						 <img src="${url}" data-src="${realFilename}" style="width:100px; height:100px; object-fit:cover;">
 					</div>
 				</div><!-- card -->`;
 
 			uploadResult.insertAdjacentHTML("beforeend", str);
 		}
-
+		
 		$(document).ready(function() {
 			// 부트스트랩 모달 객체 생성
 			const uploadModal = new bootstrap.Modal(document.querySelector(".uploadModal"));

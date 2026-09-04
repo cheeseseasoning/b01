@@ -113,14 +113,14 @@
 				<div class="col ">
 					<div class="container-fluid d-flex uploadResult"
 						style="flex-wrap: wrap;">
-						<th:block th:each="fileName:${dto.fileNames}">
-							<div class="card col-4" th:with="arr = ${fileName.split('_')}">
+						<th:block th:each="fileName, status:${dto.fileNames}">
+							<div class="card col-4">
 								<div class="card-header d-flex justify-content-center">
-									[[${arr[1]}]]
-									<button class="btn-sm btn-danger" data-uuid="[[${arr[0]}]]" data-filename="[[${arr[1]}]]">X</button>
+									[[${filename}]]
+									<button type="button" class="btn-sm btn-danger" th:data-file-key="${fileName}">X</button>
 								</div>
 								<div class="card-body">
-									<img th:src="|/view/s_${fileName}|" th:data-src="${fileName}">
+									<img th:src="${dto.fileUrls[status.index]}" th:data-src="${fileName}">
 								</div>
 							</div>
 							<!-- card -->
@@ -179,19 +179,22 @@
 		// 1. X 버튼을 누를 때 실행되는 전역 함수 및 배열
 		const removeFileList = [];
 
-		function removeFile(uuid, fileName, obj) {
-			if(!confirm("파일을 삭제하시겠습니까?")) {
-				return;
-			}
+		async function removeFile(fileKey, obj) {
+		    if (!confirm("파일을 삭제하시겠습니까?")) {
+		        return;
+		    }
 
-			// 삭제 목록에 추가
-			removeFileList.push({uuid, fileName});
+		    try {
+		        await axios.delete(`/remove/${encodeURIComponent(fileKey)}`);
 
-			// 화면에서 카드 즉시 삭제
-			const targetCard = obj.closest(".card");
-			if(targetCard) {
-				targetCard.remove();
-			}
+		        const targetCard = obj.closest(".card");
+		        if (targetCard) {
+		            targetCard.remove();
+		        }
+		    } catch (error) {
+		        console.error(error);
+		        alert("S3 파일 삭제에 실패했습니다.");
+		    }
 		}
 
 		$(document).ready(function() {
@@ -317,20 +320,23 @@
 				const uuid = uploadResultDto.uuid;
 				const fileName = uploadResultDto.filename; // 서버 응답이 소문자 filename입니다.
 				const realFilename = uploadResultDto.realFilename; // uuid_filename 형태의 전체 이름
+				const url = uploadResultDto.url;
 
 				// data-src와 뷰(View) 호출용 경로 설정 (realFilename 활용)
 				const linkStr = realFilename ? realFilename : `${uuid}_${fileName}`;
 				
 				const str = `
-					<div class="card col-4">
-						<div class="card-header d-flex justify-content-center">
-							${fileName}
-							<button class="btn-sm btn-danger" type="button" data-uuid="${uuid}" data-filename="${fileName}">X</button>
-						</div>
-						<div class="card-body">
-							<img src="/view/s_${linkStr}" data-src="${linkStr}">
-						</div>
-					</div>`;
+				    <div class="card col-4">
+				        <div class="card-header d-flex justify-content-center">
+				            ${fileName}
+				            <button class="btn-sm btn-danger"
+				                    type="button"
+				                    data-file-key="${realFilename}">X</button>
+				        </div>
+				        <div class="card-body">
+				            <img src="${url}" data-src="${realFilename}">
+				        </div>
+				    </div>`;
 				
 				$(".uploadResult").append(str);
 			}
@@ -344,10 +350,9 @@
 				if (target.tagName !== "BUTTON") {
 					return false;
 				}
-				const uuid = target.dataset.uuid;
-				const filename = target.dataset.filename;
+				const fileKey = target.dataset.fileKey;
 				
-				removeFile(uuid, filename, target);				
+				removeFile(fileKey, target);				
 			})
 		});
 	</script>

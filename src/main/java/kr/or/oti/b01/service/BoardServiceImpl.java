@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import kr.or.oti.b01.domain.Board;
 import kr.or.oti.b01.dto.BoardDTO;
@@ -17,6 +18,7 @@ import kr.or.oti.b01.dto.BoardListReplyCountDTO;
 import kr.or.oti.b01.dto.PageRequestDTO;
 import kr.or.oti.b01.dto.PageResponseDTO;
 import kr.or.oti.b01.repository.BoardRepository;
+import kr.or.oti.b01.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 public class BoardServiceImpl implements BoardService {
 	private final BoardRepository boardRepository;
 	private final ModelMapper mapper;
+	
+	private final S3Uploader s3Uploader;
 	
 	public void register(BoardDTO boardDTO) {
 //		boardRepository.save(mapper.map(boardDTO, Board.class));
@@ -59,12 +63,37 @@ public class BoardServiceImpl implements BoardService {
 	    Board board = boardRepository.findByIdWithImages(bno)
 	            .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다. bno=" + bno));
 	    
-//	    return mapper.map(board, BoardDTO.class);
-	    return entityToDto(board);
+	    BoardDTO boardDTO = entityToDto(board);
+	    List<String> fileNames = boardDTO.getFileNames().stream()
+	            .map(s3Uploader::getObjectKey)
+	            .collect(Collectors.toList());
+	    boardDTO.setFileNames(fileNames);
+	    boardDTO.setFileUrls(fileNames.stream()
+	            .map(s3Uploader::getFileUrl)
+	            .collect(Collectors.toList()));
+	    return boardDTO;
 	}
 
+	@Transactional
 	public void remove(long bno) {
-		boardRepository.deleteById(bno);
+	    Board board = boardRepository.findByIdWithImages(bno)
+	        .orElseThrow(() ->
+	            new IllegalArgumentException(
+	                "해당 게시글이 존재하지 않습니다. bno=" + bno
+	            )
+	        );
+
+	    board.getImageSet().forEach(image -> {
+	        String savedValue = image.getUuid() + "_" + image.getFilename();
+
+	        // 전체 URL이 저장되어 있으면 마지막 '/' 뒤의 S3 객체 키만 추출
+	        String s3Key = s3Uploader.getObjectKey(savedValue);
+
+	        log.info("S3 삭제 대상 key: {}", s3Key);
+	        s3Uploader.removeS3File(s3Key);
+	    });
+
+	    boardRepository.deleteById(bno);
 	}
 
 	public void modify(BoardDTO boardDTO) {
@@ -77,22 +106,27 @@ public class BoardServiceImpl implements BoardService {
 	    
 		if (boardDTO.getFileNames() != null) {
 			boardDTO.getFileNames().forEach(fileName -> {
-				String[] arr = fileName.split("_");
+				String objectKey = s3Uploader.getObjectKey(fileName);
+				String[] arr = objectKey.split("_", 2);
 				board.addImage(arr[0], arr[1]);
 			});
 		}	    
 	    
 		boardRepository.save(board);
 	}
+	
+	@Transactional
 	public void removeBatch(List<Long> bnos) {
-        log.info("removeBatch bnos: {}", bnos);
+	    log.info("removeBatch bnos: {}", bnos);
 
-        if (bnos == null || bnos.isEmpty()) {
-            return;
-        }
+	    if (bnos == null || bnos.isEmpty()) {
+	        return;
+	    }
 
-        boardRepository.deleteAllById(bnos);
-    }
+	    for (Long bno : bnos) {
+	        remove(bno);
+	    }
+	}
 
 	public PageResponseDTO<BoardListReplyCountDTO> listWithReplyCount(PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage()-1, pageRequestDTO.getSize(), Sort.by("bno").descending());
@@ -104,6 +138,11 @@ public class BoardServiceImpl implements BoardService {
 	public PageResponseDTO<BoardListAllDTO> listWithAll(PageRequestDTO pageRequestDTO) {
 		Pageable pageable = PageRequest.of(pageRequestDTO.getPage()-1, pageRequestDTO.getSize(), Sort.by("bno").descending());
 		Page<BoardListAllDTO> page = boardRepository.searchWithAll(pageRequestDTO.getTypes(), pageRequestDTO.getKeyword(), pageable);
+		page.getContent().forEach(dto -> dto.getBoardImages().forEach(image -> {
+			String savedValue = image.getUuid() + "_" + image.getFilename();
+			String objectKey = s3Uploader.getObjectKey(savedValue);
+			image.setUrl(s3Uploader.getFileUrl(objectKey));
+		}));
 		
 		return new PageResponseDTO<>(pageRequestDTO, page.getContent(), (int) page.getTotalElements());
 	}

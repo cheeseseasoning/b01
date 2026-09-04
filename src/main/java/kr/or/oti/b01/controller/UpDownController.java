@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -24,16 +25,21 @@ import org.springframework.web.multipart.MultipartFile;
 import io.swagger.annotations.ApiOperation;
 import kr.or.oti.b01.dto.upload.UploadFileDTO;
 import kr.or.oti.b01.dto.upload.UploadResultDTO;
+import kr.or.oti.b01.util.S3Uploader;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnailator;
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class UpDownController {
 	
 	
 	@Value("${spring.servlet.multipart.location}")
 	private String uploadPath;
+	
+	private final S3Uploader s3Uploader;
 	
 	@ApiOperation(value = "remove 파일", notes = "DELETE 방식으로 파일 삭제")
 	@org.springframework.web.bind.annotation.DeleteMapping(value = "/remove/{fileName}")
@@ -42,16 +48,16 @@ public class UpDownController {
 		log.info("삭제 요청받은 파일 이름: " + fileName);
 		log.info("설정된 uploadPath: " + uploadPath);
 		
-		// 실제 파일이 생성되는 경로를 콘솔로 정확히 확인하기 위해 출력
-		File targetFile = new File(uploadPath + File.separator + fileName);
-		log.info("최종 삭제 대상 파일 전체 경로: " + targetFile.getAbsolutePath());
-		log.info("파일이 실제로 존재하는지 여부(exists): " + targetFile.exists());
+//		// 실제 파일이 생성되는 경로를 콘솔로 정확히 확인하기 위해 출력
+//		File targetFile = new File(uploadPath + File.separator + fileName);
+//		log.info("최종 삭제 대상 파일 전체 경로: " + targetFile.getAbsolutePath());
+//		log.info("파일이 실제로 존재하는지 여부(exists): " + targetFile.exists());
 		
-		boolean result = false;
+		boolean result = true;
 		
 		try {
 			// 원본 파일 삭제
-			result = targetFile.delete();
+			s3Uploader.removeS3File(fileName);
 			log.info("파일 삭제 결과(true/false): " + result);
 			
 		} catch (Exception e) {
@@ -78,8 +84,9 @@ public class UpDownController {
 				log.info("파일 유형 : " + file.getContentType());
 				log.info("파일 사이즈 : " + file.getSize());
 			
-				list.add(new UploadResultDTO(uploadPath, file));
+				list.add(new UploadResultDTO(uploadPath, file, s3Uploader));
 			}
+			
 			return list;
 		}
 		return null;

@@ -27,4 +27,6 @@ public class BoardDTO {
 	private LocalDateTime modDate;
 	
 	private List<String> fileNames;
+
+	private List<String> fileUrls;
 }
