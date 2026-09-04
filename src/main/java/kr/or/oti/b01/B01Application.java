@@ -13,5 +13,5 @@ public class B01Application {
 	}
 	
 	//소유자가 로그인 기능 구현함
-
+	//게시물 관리 기능 구현함
 }
